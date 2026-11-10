@@ -13,7 +13,8 @@ export interface AuditUser {
   owner: string; review_status: string; note: string; console_access: string; mfa_enabled: string
   created_at: string; password_last_used: string; groups: string[]; access_keys: AccessKey[]
   policies: Policy[]; permissions_boundary?: Policy; ip_status: string; ip_explanation: string
-  ip_ranges: string[]; warnings: string[]
+  ip_ranges: string[]; secrets_access?: string; secrets_explanation?: string; secrets_evidence?: string[]
+  warnings: string[]
 }
 export interface Account {
   id: string; name: string; alias: string; owner: string; status: string; last_synced_at: string
