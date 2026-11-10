@@ -2,6 +2,47 @@
 
 Vue 3、TypeScript、Vite 构建的中文 AWS IAM 审计工作台。后端仓库：[AuditPlatform_server](https://github.com/userreksai/AuditPlatform_server)。
 
+## Linux 独立部署
+
+前端使用 Nginx 在 **9100** 端口提供生产页面，并将同源 `/api` 请求代理到 Go 后端 **10001** 端口。先启动后端，再在 Linux 服务器执行：
+
+```sh
+git clone https://github.com/userreksai/AuditPlatform_web.git
+cd AuditPlatform_web
+sudo bash install.sh
+```
+
+安装完成后访问 `http://服务器IP:9100`。脚本安装所需依赖、使用校验过 SHA256 的官方 Node.js 24 LTS 构建前端、部署静态文件并配置 Nginx。发布文件保存在 `/opt/aws-audit-web/releases/`，`/opt/aws-audit-web/current` 指向当前版本，Nginx 配置为 `/etc/nginx/conf.d/aws-audit-web.conf`。
+
+如果此前运行过 Vite 开发服务，请先停止该进程，释放 9100 端口，再执行生产部署。
+
+```sh
+# 后端在其他服务器，或需要自定义前端端口
+sudo bash install.sh --backend http://192.0.2.10:10001 --port 9100
+
+# 系统依赖已准备好时，跳过依赖安装
+sudo bash install.sh --no-deps
+
+# 只部署文件和生成配置，不启动或重载 Nginx
+sudo bash install.sh --no-start
+
+# 已准备好仓库根目录下的 dist/index.html，跳过 Node.js 和前端构建
+sudo bash install.sh --dist-only
+```
+
+`--backend` 默认为 `http://127.0.0.1:10001`，支持 HTTP/HTTPS 域名、IPv4 或方括号形式的 IPv6 地址及可选端口；不要附加账号密码、路径、查询参数或片段。浏览器始终通过前端地址的 `/api` 访问后端，不需要开放跨域。使用 HTTPS 后端时，Nginx 会验证上游证书，请确保系统信任相应 CA。
+
+```sh
+sudo nginx -t
+curl -fsS http://127.0.0.1:9100/api/health
+```
+
+后端健康检查应返回 `status: ok`。平台登录账号与密码、AWS Access Key 仍在**后端**配置文件中维护；前端部署脚本不保存这些凭证。生产公网访问建议在入口配置 HTTPS，并按 HTTPS 入口设置后端安全 Cookie。
+
+脚本会运行 `nginx -t`，启动/重载后核对本次发布标识和首页是否可读；发布失败时恢复上一次前端配置和文件链接。`--no-start` 不执行启动和重载，稍后可运行 `sudo nginx -t && sudo systemctl enable --now nginx && sudo systemctl reload nginx`。
+
+运行 SELinux 的服务器需由管理员核对静态目录的 `httpd_sys_content_t` 标签、9100 端口的服务类型以及 Nginx 访问后端的策略；脚本不关闭 SELinux，也不修改全局安全策略。若启动或访问失败，查看 `sudo journalctl -u nginx -n 30 --no-pager` 和 `/var/log/nginx/error.log`。同时确认服务器安全组允许访问前端端口。
+
 ## 本地开发
 
 需要 Node.js 22.12+（或 24 LTS）和 pnpm 11.25.0。
@@ -20,7 +61,7 @@ pnpm typecheck
 pnpm build
 ```
 
-生成的 `dist/` 交由 Go 服务端同源托管。后端的 `install.sh` 可自动拉取、构建并部署前端。生产环境建议使用 HTTPS 反向代理和服务端安全 Cookie 配置。
+开发服务使用的 9100 端口与默认 Nginx 生产端口相同，两者不要同时运行。`pnpm dev` 用于开发；生产部署使用上面的前端 `install.sh`。生成的 `dist/` 也可以交由 Go 服务端同源托管，后端 `install.sh` 保留此集成部署方式。
 
 默认同源，不需要设置 API 地址。`VITE_API_BASE_URL` 仅供同源代理前缀使用；配套后端不支持直接跨域部署，生产环境由 Go 或同一反向代理托管页面与 API。
 
