@@ -25,7 +25,10 @@ function user(name: string, id: number, account: number): AuditUser {
     policies: id % 3 === 0 ? [security, restricted] : id % 2 === 0 ? [{ ...security, source: 'group', group_name: 'SecurityTeam' }] : [security],
     ip_status: id % 3 === 0 ? 'restricted' : id % 2 === 0 ? 'conditional' : 'unrestricted',
     ip_explanation: id % 3 === 0 ? '在 sp7969 中发现 Deny + NotIpAddress 条件；需要结合完整条件判断。' : '未发现明确覆盖全部请求的 IP 拒绝条件；不代表实际可从任意地址访问。',
-    ip_ranges: id % 3 === 0 ? ['203.0.113.10/32', '198.51.100.24/32'] : [], warnings: [],
+    ip_ranges: id % 3 === 0 ? ['203.0.113.10/32', '198.51.100.24/32'] : [],
+    secrets_access: id % 3 === 0 ? 'limited' : 'none',
+    secrets_explanation: id % 3 === 0 ? '演示：可读取 Secret 的值，但受带条件的拒绝语句（来源 IP）约束。' : '演示：未发现授予 secretsmanager:GetSecretValue 的允许语句。',
+    secrets_evidence: id % 3 === 0 ? ['拒绝（部分 Secret 或带条件，如来源 IP）: sp7969 / DenyOutsideAllowedIPs'] : [], warnings: [],
   }
 }
 export function demoDashboard(): Dashboard {
