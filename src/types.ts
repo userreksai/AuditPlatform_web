@@ -14,6 +14,7 @@ export interface AuditUser {
   created_at: string; password_last_used: string; groups: string[]; access_keys: AccessKey[]
   policies: Policy[]; permissions_boundary?: Policy; ip_status: string; ip_explanation: string
   ip_ranges: string[]; secrets_access?: string; secrets_explanation?: string; secrets_evidence?: string[]
+  rds_secret_access?: string; rds_secret_explanation?: string; rds_secret_evidence?: string[]
   warnings: string[]
 }
 export interface Account {
@@ -29,3 +30,14 @@ export interface SyncStatus {
   timezone: string; schedule: string; last_result: string; logs: SyncLog[]
 }
 export interface Dashboard { accounts: Account[]; users: AuditUser[]; sync: SyncStatus }
+export interface RDSSecret {
+  account_id: string; account_name: string; region: string; kind: string; identifier: string
+  engine: string; engine_version: string; master_username: string; migrated: string
+  secret_arn: string; secret_status: string; kms_key_id: string; verdict: string; verdict_text: string
+  rotation_enabled: string; rotation_period: string; rotation_schedule: string; rotation_window: string
+  last_rotated_at: string; next_rotation_at: string; next_rotation_source: string; warnings: string[]
+}
+export interface RDSAccountSummary {
+  account_id: string; account_name: string; status: string; error: string; synced_at: string; regions: string[]; count: number
+}
+export interface RDSSecretsView { accounts: RDSAccountSummary[]; items: RDSSecret[] }
